@@ -1,0 +1,273 @@
+<!--  Overview of this main visualization:
+
+1. Import necessary libraries and modules
+2. Define width of the SVG container
+3. Select the SVG container and set its width
+4. Define a function to get country coordinates
+
+5. Add an event listener for 'fileParsingComplete' event
+   5.1. Get parsed data from the event
+   5.2. Call the callbackParsing function with parsed data
+
+6. Define callbackParsing function
+   6.1. Hide pre-content and show content
+   6.2. Log the JSON data
+   6.3. Parse the timestamp string to a Date object
+   6.4. Map the data to include a value property
+   6.5. Group the data by country
+   6.6. Initialize an array to store most listened tracks
+   6.7. For each country group, reduce the data to sum the values by track
+   6.8. Sort the reduced data by value
+   6.9. Push the most listened track to the array
+   6.10. Map the most listened tracks to include coordinates
+   6.11. Log the most listened tracks
+   6.12. Group the data by track
+   6.13. Log the grouped data
+
+7. Select the SVG and define its width and height
+8. Define the map and projection
+9. Load the world shape data
+   9.1. On success, call the ready function
+   9.2. On error, throw the error
+
+10. Define ready function
+    10.1. Get the data from the function arguments
+    10.2. Create a color scale
+    10.3. Calculate the domain for the scale
+    10.4. Create the scale
+    10.5. Draw the map
+    10.6. Use the scale to set the size of the circles
+    10.7. Check for null properties when creating the circles
+    10.8. Add frames over map
+    10.9. Create an iframe for the most played track
+
+11. Define updateYear function
+    11.1. Filter the data by year
+    11.2. Update the circles
+
+12. Add a slider or dropdown menu for the year
+13. Call updateYear() when the user changes the year
+14. Add tooltips
+15. Initialize the visualization with the current year
+-->
+
+
+
+<svg  id="my_dataviz" width="800" height="700"></svg>
+
+<!-- Load d3.js and the geo projection plugin -->
+<script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+<script>
+    import * as d3 from "d3"
+    import * as coords from 'country-coords';
+    var width = window.innerWidth;
+    var svgContainer = d3.select("#my_dataviz").attr("width", width);
+    const byCountry = coords.byCountry();
+
+  document.addEventListener('fileParsingComplete', function(event) {
+      var parsedData = event.detail;
+      callbackParsingMap(parsedData);
+  });
+
+function callbackParsingMap(fileData) {
+    // Hide 'pre-content' and show 'content'
+    document.getElementById('pre-content').style.display = "none";
+    document.getElementById('content').style.display = "block";
+    console.log('debugging')
+    // Parse the string to a date object and map the value to ms_played
+    fileData = fileData.map((data) => ({
+        ...data,
+        parsedDate: new Date(data.ts),
+        value: data.ms_played
+    }));
+
+    // Group data by country
+    const grouped = d3.group(fileData, d => d.conn_country);
+
+    // Initialize an array to store the most listened tracks
+    let mostListenedTracks = [];
+
+    // Iterate over the grouped data
+    for (const [keyC, value] of grouped.entries()) {
+        // Reduce the data to get the total value for each track
+        var reduced = value.reduce(function(acc, curr) {
+            var key = curr.spotify_track_uri;
+            if (acc.hasOwnProperty(key)) {
+                acc[key].value += curr.value;
+            } else {
+                acc[key] = {
+                    "spotify_track_uri": curr.spotify_track_uri,
+                    "value": curr.value,
+                    "country": keyC
+                };
+            }
+            return acc;
+        }, {});
+
+        // Convert the reduced object to an array and sort it
+        const reducedArray = Object.values(reduced).sort(function(a, b) {
+            return b.value - a.value;
+        });
+
+        // Push the most listened track to the array
+        mostListenedTracks.push(reducedArray[0]);
+    }
+
+    // Map the coordinates for each track
+    mostListenedTracks = mostListenedTracks.map(x => ({
+        ...x,
+        coord: byCountry.get(x.country),
+    }));
+
+    // Group data by track_id
+    const groupedByTracks = d3.group(fileData, d => d.track_id);
+
+    // ... other possible groupings
+
+
+
+    // setup svg 
+    var svg = d3.select("#my_dataviz"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height");
+
+    // define map projection 
+    var projection = d3.geoMercator()
+    .center([0,20])                
+    .scale(width / Math.PI / 2)                       
+    .translate([ width/2, height/2 ]);
+
+    // add promise and call ready on success of load of world shape data
+    Promise.all([
+    d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson"), // World shape
+    ])
+    .then(ready)
+    .catch(error => {
+        throw error;
+    });
+
+
+    // Define ready function
+    function ready(de) {
+        // Extract the GeoJSON data
+        const dataGeo = de[0];
+
+        // Create a color scale
+        var allContinent = d3.map(mostListenedTracks, function(d){return(d.homecontinent)}).keys();
+        var color = d3.scaleOrdinal()
+            .domain(allContinent)
+            .range(d3.schemePaired);
+
+        // Create a scale for bubble size
+        var valueExtent = d3.extent(mostListenedTracks, function(d) { return d.value; });
+        var size = d3.scaleSqrt()
+            .domain(valueExtent)
+            .range([3, 30]);  // Adjust these values to change the minimum and maximum sizes of the circles
+
+
+        // create color scaling based on same metrix so we can emphasize the same continent with the same color
+        var color = d3.scaleOrdinal()
+            .domain(allContinent)
+            .range(d3.schemePaired);
+
+
+        // Draw the map
+        svg.append("g")
+            .selectAll("path")
+            .data(dataGeo.features)
+            .enter()
+            .append("path")
+            .attr("fill", "#b8b8b8")
+            .attr("d", d3.geoPath()
+                .projection(projection)
+            )
+            .style("stroke", "none")
+            .style("opacity", .3);
+
+        // Draw the circles
+        svg.selectAll("myCircles")
+            .data(mostListenedTracks.sort(function(a,b) { return b.value - a.value; }))
+            .enter()
+            .append("circle")
+            .attr("cx", function(d){ return projection([+d.coord?.longitude || 0, +d.coord?.latitude || 0])[0]; })  // Use optional chaining and a default value
+            .attr("cy", function(d){ return projection([+d.coord?.longitude || 0, +d.coord?.latitude || 0])[1]; })  // Use optional chaining and a default value
+            .attr("r", function(d){ return size(d.value); })  // Use the scale here
+            .attr("stroke", "black")
+            .attr("stroke-width", 1)
+            .attr("fill-opacity", .45)
+            .style("fill", function(d){ return color(d.homecontinent) })
+
+        // Add tooltips
+        var tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+        svg.selectAll("circle")
+            .on("mouseover", function(d) {
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                tooltip.html("Country: " + d.country + "<br/>" + "Value: " + d.value)
+                    .style("left", (d3.event.pageX) + "px")
+                    .style("top", (d3.event.pageY - 28) + "px");
+            })
+            .on("mouseout", function(d) {
+                tooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+    }
+
+
+    // Add a slider or dropdown menu for the year and update function
+
+    // 11. Define updateYear function
+    function updateYear(year) {
+        // 11.1. Filter the data by year
+        var filteredData = mostListenedTracks.filter(function(d) {
+            return d.parsedDate.getFullYear() === year;
+        });
+
+        // 11.2. Update the circles
+        svg.selectAll("circle")
+            .data(filteredData, function(d) { return d.spotify_track_uri; })  // Use the track URI as the key
+            .join(
+                enter => enter.append("circle")
+                    .attr("cx", function(d){ return projection([+d.coord?.longitude || 0, +d.coord?.latitude || 0])[0]; })
+                    .attr("cy", function(d){ return projection([+d.coord?.longitude || 0, +d.coord?.latitude || 0])[1]; })
+                    .attr("r", function(d){ return size(d.value); })
+                    .attr("stroke", "black")
+                    .attr("stroke-width", 1)
+                    .attr("fill-opacity", .45)
+                    .style("fill","#1CD760"),
+                update => update,
+                exit => exit.remove()
+            );
+    }
+
+    // 12. Add a slider or dropdown menu for the year
+    var yearSlider = d3.select("body").append("input")
+        .attr("type", "range")
+        .attr("min", d3.min(mostListenedTracks, function(d) { return d.parsedDate.getFullYear(); }))
+        .attr("max", d3.max(mostListenedTracks, function(d) { return d.parsedDate.getFullYear(); }))
+        .attr("value", new Date().getFullYear())
+        .on("input", function() {
+            updateYear(+this.value);
+        });
+
+    // 13. Call updateYear() when the user changes the year
+    // This is handled by the "input" event listener on the slider
+
+    // 14. Add tooltips
+    // This was done in the ready() function
+
+    // 15. Initialize the visualization with the current year
+    updateYear(new Date().getFullYear());
+
+
+}   
+    
+    </script>

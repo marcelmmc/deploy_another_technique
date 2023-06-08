@@ -1,0 +1,253 @@
+---
+import { SITE } from '~/config.mjs';
+import Layout from '~/layouts/PageLayout.astro';
+import Hero from '~/components/widgets/Hero.astro';
+import BarChartRace from '~/components/BarChartRace.astro';
+import MostListenedTrack from '~/components/MostListenedTrack.astro';
+import MostListenedArtist from '~/components/MostListenedArtist.astro';
+import SleepStatistics from '~/components/SleepStatistics.astro';
+import Map from '~/components/Map.astro';
+import Radar from '~/components/Radar.astro';
+import VizLayout from '~/layouts/VizLayout.astro';
+import VisitedCities from '~/components/VisitedCities.astro';
+import WordCloud from '~/components/WordCloud.astro';
+import World from '~/components/World.astro';
+import WorldCloudAlbumn from '~/components/WordCloudAlbumn.astro';
+import FeatureExplanation from '~/components/FeatureExplanation.astro';
+
+const meta = {
+  title: SITE.title,
+  description: SITE.description,
+  dontUseTitleTemplate: true,
+};
+---
+
+<Layout {meta}>
+  <div class="flex items-center justify-center flex-col">
+    <embed src={'decoration.html'} height="170" width="300" title="decoration" />
+  </div>
+
+  <!-- Hero Widget ******************* -->
+  <Hero>
+    <Fragment slot="title">Spotify Twisters</Fragment>
+
+    <Fragment slot="subtitle">
+      <span class="hidden sm:inline">
+        <span class="font-semibold">SpotifyTwister</span> is a research tool built by EPFL students to learn more about how
+        is your personal data being used by Spotify.
+      </span>
+
+      <div>
+        <input
+          type="file"
+          id="input-file"
+          class="text-sm text-grey-500 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 file:mr-5 file:py-2 file:px-6 file:rounded-full file:border-0 hover:file:cursor-pointer hover:file:bg-amber-50 hover:file:text-amber-700"
+          multiple
+        />
+      </div>
+      <body>
+      <script is:inline>
+        var mergedData = []; // Globally accessible variable to store the parsed data
+      
+        document.getElementById('input-file').addEventListener('change', function (e) {
+          if (e.target.files.length > 0) {
+            var files = e.target.files;
+            var count = 0; // Counter to track the number of files processed
+      
+            for (var i = 0; i < files.length; i++) {
+              var file = files[i];
+              var reader = new FileReader();
+      
+              reader.addEventListener(
+                'load',
+                function (e) {
+                  var fileData = JSON.parse(e.target.result);
+                  mergedData = [...mergedData, ...fileData];
+                  count++;
+                  // Check if all files have been processed
+                  if (count === files.length) {
+                    mergedData = mergedData.map((data) => ({
+                      ...data,
+                      parsedDate: new Date(data.ts),
+                    }));
+                    mergedData.sort((a, b) => a.parsedDate - b.parsedDate);
+                    // Dispatch a custom event to notify the completion of file parsing
+                    var event = new CustomEvent('fileParsingComplete', { detail: mergedData });
+                    document.dispatchEvent(event);
+                  }
+                },
+                false
+              );
+      
+              if (file) {
+                reader.readAsText(file);
+              }
+            }
+          }
+        });
+      
+        //COPY THIS CODE HERE IN YOUR COMPONENT */
+        // COPY THIS CODE HERE IN YOUR COMPONENT/
+        // Event listener to handle the completion of file parsing
+        document.addEventListener('fileParsingComplete', function (event) {
+          var parsedData = event.detail;
+          callbackParsing(parsedData);
+        });
+      
+        async function callbackParsing(data) {
+          // Use the parsed data in your function
+          console.log('Parsed Data: ', data);
+          document.getElementById('content').style.display = 'block';
+          // document.getElementById('link-spotify-download').style.display = 'none';
+          // Perform further processing or actions}
+        }
+      </script>
+      
+      <!-- <script>
+        // COPY THIS CODE HERE IN YOUR COMPONENT/
+        // Event listener to handle the completion of file parsing
+        document.addEventListener('fileParsingComplete', function (event) {
+          var parsedData = event.detail;
+          callbackParsing(parsedData);
+        });
+      
+        async function callbackParsing(data) {
+          // Use the parsed data in your function
+          console.log('Parsed Data: ', data);
+          document.getElementById('content').style.display = 'block';
+          // document.getElementById('link-spotify-download').style.display = 'none';
+          // Perform further processing or actions}
+        }
+      </script> -->
+      </body>
+      <div class="mt-16" id="pre-content">
+        <p style="display: block;" class="font-light cursor-pointer text-blue-500 underline hover:underline">
+          <a href="https://support.spotify.com/us/article/data-rights-and-privacy-settings/">
+            To use this application, please click here to ask Spotify for your data. 
+            We encourage you to download all the data available, you can then upload the endsong.json files here.
+          </a>
+        </p>
+
+        <p class="bg-slate-50 rounded p-4 shadow-sm mt-12 font-light text-black/70">
+          The General Data Protection Regulation (GDPR) was implemented by the European Union on May 25, 2018, to
+          enhance data protection. The GDPR grants individuals the right to access and download their personal data,
+          enabling them to review and understand how their information is being processed.
+        </p>
+      </div>
+    </Fragment>
+  </Hero>
+
+  <!-- Data columns (total 19 columns):
+ #   Column                             Non-Null Count   Dtype 
+---  ------                             --------------   ----- 
+ 0   ts                                 115009 non-null  object
+ 1   ms_played                          115009 non-null  int64 
+ 2   conn_country                       115009 non-null  object
+ 3   ip_addr_decrypted                  115009 non-null  object
+ 4   user_agent_decrypted               115009 non-null  object
+ 5   master_metadata_track_name         114499 non-null  object
+ 6   master_metadata_album_artist_name  114499 non-null  object
+ 7   master_metadata_album_album_name   114499 non-null  object
+ 8   spotify_track_uri                  114499 non-null  object
+ 9   episode_name                       313 non-null     object
+ 10  episode_show_name                  313 non-null     object
+ 11  spotify_episode_uri                313 non-null     object
+ 12  reason_start                       115009 non-null  object
+ 13  reason_end                         115009 non-null  object
+ 14  shuffle                            115009 non-null  bool  
+ 15  skipped                            15340 non-null   object
+ 16  offline                            115009 non-null  bool  
+ 17  offline_timestamp                  115009 non-null  int64 
+ 18  incognito_mode                     115009 non-null  bool  
+
+
+ ts	ms_played	conn_country	ip_addr_decrypted	user_agent_decrypted	master_metadata_track_name	master_metadata_album_artist_name	master_metadata_album_album_name	spotify_track_uri	episode_name	episode_show_name	spotify_episode_uri	reason_start	reason_end	shuffle	skipped	offline	offline_timestamp	incognito_mode
+2018-09-24T17:43:57Z	235382	CH	85.218.54.155	unknown	Sing	Ed Sheeran	x	spotify:track:6K8qKeWo5MsFED7wCR6Kop	None	None	None	fwdbtn	trackdone	True	None	True	1537810148612	False
+-->
+<VizLayout
+    title={''}
+    vizText={'These are the 19 features inside the main endsong.json files that Spotify uses to track your data.'}
+    reverse={true}
+    dataUsed={{
+      ts: '2018-09-24T17:43:57Z',
+      ms_played: 235382,
+      conn_country: 'CH',
+      ip_addr_decrypted: '85.208.53.147',
+      user_agent_decrypted: 'unknown',
+      master_metadata_track_name: 'Sing',
+      master_metadata_album_artist_name: 'Ed Sheeran',
+      master_metadata_album_album_name: 'x',
+      spotify_track_uri: 'spotify:track:6K8qKeWo5MsFED7wCR6Kop',
+      episode_name: 'None',
+      episode_show_name: 'None',
+      spotify_episode_uri: 'None',
+      reason_start: 'fwdbtn',
+      reason_end: 'trackdone',
+      shuffle: true,
+      skipped: 'None',
+      offline: true,
+      offline_timestamp: 1537230143612,
+      incognito_mode: false,
+    }}
+  >
+    <FeatureExplanation />
+  </VizLayout>
+  <div id="content" style="display: none">
+    <div class="flex items-center justify-center flex-col w-full">
+      <MostListenedTrack />
+    </div>
+
+    <!-- <div class="flex items-center justify-center flex-col w-full">
+      <MostListenedArtist />
+    </div> -->
+    <VizLayout
+    title={'Most listened artists'}
+    reverse={false}
+    dataUsed={{ tz: '2019/10/22', ms_played: 1500 }}
+    vizText={'We use the number of ms_played and the listening dates in order to show this graph!'}
+  >
+    <BarChartRace />
+  </VizLayout>
+
+    <!-- <VizLayout
+      title={'Visited cities'}
+      vizText={'In order to show the location of the cities, we use the ip-api.com api to obtain the approximate location with the ip_addr_decrypted.'}
+      reverse={true}
+      dataUsed={{ country: 'BR', ms_played: 1500, tz: '2012/10/22', decrypted_ip_addr: '129.34.29.28' }}
+    >
+      <VisitedCities />
+    </VizLayout> -->
+    <VizLayout
+      title={'Visited cities'}
+      vizText={'In order to show the location of the cities, we use the ip-api.com api to obtain the approximate location with the ip_addr_decrypted.'}
+      reverse={false}
+      dataUsed={{ country: 'BR', ms_played: 1500, tz: '2012/10/22', decrypted_ip_addr: '129.34.29.28' }}
+    >
+      <World />
+    </VizLayout>
+    <VizLayout
+      title={'Mean listening times per weekday'}
+      vizText={'We group all the records by day of the week and average out the ms_played times!'}
+      reverse={false}
+      dataUsed={{ ms_played: 1500, tz: '2012/10/22' }}
+    >
+      <Radar />
+    </VizLayout>
+    <VizLayout
+      title={'Your sleep analysis'}
+      vizText={'One can infer the sleep time of a person by looking at the time when the person stops listening to music and when the person starts listening to music again. We process the data in a smart manner, by filtering outliers and keeping only what looks like real sleep times.'}
+      reverse={true}
+      dataUsed={{ ms_played: 1500, tz: '2012/10/22' }}
+    >
+      <SleepStatistics />
+    </VizLayout>
+    <VizLayout vizText={''} title={'Word Cloud of Track Names'} reverse={false} dataUsed={{ master_metadata_album_artist_name: 'Imagine Dragons'}}>
+      <WordCloud />
+    </VizLayout>
+    <VizLayout vizText={''} title={'Word Cloud of Album Titles'} reverse={true} dataUsed={{ master_metadata_album_album_name: 'Smoke + Mirrors'}}>
+      <WorldCloudAlbumn />
+    </VizLayout>
+  </div>
+
+
+</Layout>

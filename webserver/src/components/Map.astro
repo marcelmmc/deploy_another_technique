@@ -1,0 +1,159 @@
+<div> <svg  id="my_dataviz" width="800" height="700"></svg> </div>
+
+<!-- Load d3.js and the geo projection plugin -->
+<script src="https://d3js.org/d3.v4.js" defer></script>
+<script src="https://d3js.org/d3-geo-projection.v2.min.js" defer></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js" defer></script>
+<script src="../../node_modules/country-coords/index.js" defer></script>
+
+<script>
+    // import * as d3 from "d3"
+    // import * as coords from 'country-coords';
+    var width = window.innerWidth;
+    var svgContainer = d3.select("#my_dataviz")                       
+    .attr("width", width)
+    const byCountry = coords.byCountry();
+
+  document.addEventListener('fileParsingComplete', function(event) {
+      var parsedData = event.detail;
+      callbackParsing(parsedData);
+  });
+
+function callbackParsing(fileData) {
+//   document.getElementById('pre-content').style.display = "none";
+    // document.getElementById('content').style.display = "block";
+    console.log("JSON data: ", fileData)
+    //Parses the string to a date object
+    fileData = fileData.map((data) => ({
+        ...data,
+        parsedDate: new Date(data.ts),
+    }))
+
+    fileData = fileData.map((data) => ({
+        ...data,
+        value: data.ms_played
+    }))
+
+    const grouped = d3.group(fileData, d => d.conn_country)
+
+    let mostListenedTracks: any[] = []
+
+    console.log("most listened tracks", mostListenedTracks)
+
+    for (const [keyC, value] of grouped.entries()) {
+        console.log("Grouped by country: ", keyC, value);
+        var reduced = value.reduce(function(acc, curr) {
+                var key = curr.spotify_track_uri;
+                if (acc.hasOwnProperty(key)) {
+                    acc[key].value += curr.value;
+                } else {
+                    acc[key] = {
+                        "spotify_track_uri": curr.spotify_track_uri,
+                        "value": curr.value,
+                        "country": keyC
+                    };
+                }
+                return acc;}, {});
+        const reducedArray = Object.values(reduced)
+        //Sort the array
+        reducedArray.sort(function(a, b) {
+            return b.value - a.value;
+        });
+        console.log("Reduced Arr: ", reducedArray)  
+        mostListenedTracks.push(reducedArray[0])
+    }
+    mostListenedTracks = mostListenedTracks.map(x => ({
+        ...x,
+        coord: byCountry.get(x.country),
+    }))
+
+    //Sum values by same artist name and year
+    console.log("Most listened: ", mostListenedTracks)
+
+    //console.log("Reduced ip data: ", reducedArray)
+
+
+    //Groups data by date.   
+    const groupedByTracks = d3.group(fileData, d => d.track_id)
+    console.log("Grouped By tracks: ", groupedByTracks)
+    // The svg
+    var svg = d3.select("#my_dataviz"),
+        width = +svg.attr("width"),
+        height = +svg.attr("height");
+    
+    // Map and projection
+    var projection = d3.geoMercator()
+        .center([0,20])                
+        .scale(width / Math.PI / 2)                       
+        .translate([ width/2, height/2 ])
+    
+        Promise.all([
+    d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson"), // World shape
+        ])
+        .then(ready)
+        .catch(error => {
+            throw error;
+        });
+    
+    function ready(de) {
+
+        const dataGeo = de[0];
+        const data = mostListenedTracks;
+    
+      // Create a color scale
+      var allContinent = d3.map(data, function(d){return(d.homecontinent)}).keys()
+      var color = d3.scaleOrdinal()
+        .domain(allContinent)
+        .range(d3.schemePaired);
+    
+      // Add a scale for bubble size
+      var valueExtent = d3.extent(data, function(d) { return +d.n; })
+      var size = d3.scaleSqrt()
+        .domain(valueExtent)  // What's in the data
+        .range([ 1, 50])  // Size in pixel
+    
+      // Draw the map
+      svg.append("g")
+          .selectAll("path")
+          .data(dataGeo.features)
+          .enter()
+          .append("path")
+            .attr("fill", "#b8b8b8")
+            .attr("d", d3.geoPath()
+                .projection(projection)
+            )
+          .style("stroke", "none")
+          .style("opacity", .3)
+    
+      svg
+        .selectAll("myCircles")
+        .data(data.sort(function(a,b) { return +b.n - +a.n }))
+        .enter()
+        .append("circle")          
+        .attr("cy", function(d){ return projection([+d.coord.longitude, +d.coord.latitude])[1] })
+
+          .attr("cx", function(d){return projection([+d.coord.longitude, +d.coord.latitude])[0] })
+          .attr("r", function(d){ return 10})
+          .attr("stroke", "black")
+          .attr("stroke-width", 2)
+          .attr("fill-opacity", .45)
+          .style("fill","#1CD760")
+
+      //TODO: add frames over map
+    
+        const trackId = fileData[i].spotify_track_uri.split(":")[2]
+    const trackUri = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator`
+    const ifrm = document.createElement("iframe");
+    console.log("Track URI: ", trackUri)
+    ifrm.style.width = "100%";
+    ifrm.style.height = "352";
+    ifrm.setAttribute("width", "100%")
+    ifrm.setAttribute("height", "352")
+    ifrm.setAttribute("frameBorder", "0")
+    ifrm.setAttribute("id", `iframe-most-played-${i}`)
+    ifrm.setAttribute("allow", "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture")
+    ifrm.setAttribute("src", trackUri)
+    
+    }}   
+    
+    </script>

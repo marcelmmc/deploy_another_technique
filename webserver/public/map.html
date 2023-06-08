@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<!-- Reference from tutorial leaf https://leafletjs.com/examples/quick-start/ -->
+<html lang="en">
+
+<head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Quick Start - Leaflet</title>
+
+    <link rel="shortcut icon" type="image/x-icon" href="docs/images/favicon.ico" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+        integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+        integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+
+    <style>
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+        }
+
+        .leaflet-container {
+            height: 400px;
+            width: 400px;
+        }
+    </style>
+
+
+</head>
+
+<body>
+    <div id="map" style="margin-left:10em; width: 600px; height: 400px;"></div>
+    <script>
+        const map = L.map('map').setView([50, 15], 4);
+
+        var marker = L.marker([46.519, 6.567]).addTo(map);
+        marker.bindPopup("You listened to low score energetic music, were you sad?").openPopup();
+
+        var marker_happy = L.marker([43.46, 11.19]).addTo(map);
+        marker_happy.bindPopup("You listened to high score energetic music, were you partying?").openPopup();
+
+
+        const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+    </script>
+
+
+
+</body>
+
+</html>

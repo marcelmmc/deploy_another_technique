@@ -1,0 +1,19 @@
+# MacOS
+.DS_Store
+
+# Notebooks
+.ipynb_checkpoints
+
+# Python
+__pycache__/
+.cache
+
+# Other
+secrets.txt
+
+sensitive/*
+
+# Data
+data/
+
+.vscode

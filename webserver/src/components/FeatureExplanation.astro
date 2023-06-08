@@ -1,0 +1,35 @@
+<div class="w-full md:px-16 pb-12">
+    <h1 class="text-3xl font-bold py-4 pb-12 text-gray-700" id="feature-explanation-title" style="display: block;">Understanding Your Data</h1>
+    <div id="feature-explanation" class="flex md:flex-row mx-12 gap-12">
+        <div class="w-full md:w-1/2">
+            <p class="text-gray-500">
+            Welcome to Spotify Twister, an interactive tool that allows you to explore your personal Spotify data. We pivot away from aggregate public data and focus on the unique patterns in an individual's data. Our project provides a lens into your personal music consumption trends, leveraging the organized, detailed, and accessible dataset provided by Spotify. It's a step towards making the most out of your data.
+            </p>
+        </div>
+        <div class="w-full md:w-1/2">
+            <p class="text-gray-500">
+            Whether you're a tech enthusiast or a music lover curious about your listening habits, Spotify Twister aims to provide you an intuitive and informative experience. Join us in this exploration and discover the fascinating stories hidden within your data!
+            </p>
+        </div>
+    </div>
+    <div class="w-full py-8">
+        <p class="text-gray-500">
+        We believe in the power of data transparency and individuality. By peeling back the layers of metadata, Spotify Twister lets you journey into the nuances of your listening habits, revealing insights you may never have realized. Let's dive into this exciting exploration of data, music, and personal patterns!
+        </p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('fileParsingComplete', function(event) {
+    var parsedData = event.detail;
+    callbackParsing(parsedData);
+});
+
+function callbackParsing(fileData) {
+    // change visibility of this block to none
+    // document.getElementById('feature-explanation-title').style.display = 'none';
+    // document.getElementById('feature-explanation').style.display = 'none';
+}
+</script>
+
+

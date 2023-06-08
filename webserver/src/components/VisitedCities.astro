@@ -1,0 +1,62 @@
+<div class="flex w-full items-center justify-center p-20">
+    <ol class="font-medium text-md list-decimal grid grid-rows-4 grid-flow-col gap-6" id="cities-list">
+    </ol> 
+</div>
+
+<head>
+    <title>JavaScript D3 Exampl  ss sss e</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  
+  
+<script is:inline>
+    function getFlagEmoji(countryCode) {
+        const codePoints = countryCode
+            .toUpperCase()
+            .split('')
+            .map(char => 127397 + char.charCodeAt());
+        return String.fromCodePoint(...codePoints);
+    }
+
+    document.addEventListener('fileParsingComplete', function(event) {
+        var parsedData = event.detail;
+        console.log("why?")
+        callbackParsingVisitg(parsedData);
+    });
+
+    async function callbackParsingVisitg(fileData) {
+            console.log("Merged visited cities data: ", fileData)
+            //Parses the string to a date object
+            fileData = fileData.map((data) => ({
+                ...data,
+                parsedDate: new Date(data.ts),
+            }))
+
+            //Group data by country
+            const grouped = d3.group(fileData, d => d.conn_country)
+
+            const samples = []
+
+            for (const [key, value] of grouped.entries()) {
+                //Sort value by date
+                value.sort((a, b) => a.parsedDate - b.parsedDate)
+                samples.push(value[0])
+            }
+
+            const locations = await fetch("http://ip-api.com/batch", {
+                method: "POST",
+                body: JSON.stringify(samples.map((x) => x.ip_addr_decrypted))
+            })
+            const data = await locations.json()
+
+            console.log("Locations data", data)
+            document.getElementById("cities-list").innerHTML = data.map((x, i) =>
+                `<li class="my-3 underline">${samples[i].parsedDate.toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} -
+        ${x.city}, ${x.country} ${getFlagEmoji(x.countryCode)}</li>`
+            ).join("")
+
+            document.getElementById("cities-list").style.display = "block"
+
+
+        }
+</script>

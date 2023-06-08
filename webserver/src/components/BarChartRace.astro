@@ -1,0 +1,348 @@
+<div id="bar-race"><div id="bar-race-title"></div></div>
+
+
+<head>
+  <title>JavaScript D3 Example</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+
+
+<script is:inline>
+
+document.addEventListener('fileParsingComplete', function(event) {
+      var parsedData = event.detail;
+      callbackParsingss(parsedData);
+  });
+
+function callbackParsingss(fileData) {
+    console.log("JSON data bar chart: ", fileData)
+    //Parses the string to a date object
+    fileData = fileData.map((data) => ({
+        ...data,
+        parsedDate: new Date(data.ts)
+    }))
+    //Gets date from data
+    fileData = fileData.map((data) => ({
+        ...data,
+        year: data.parsedDate.getFullYear() + data.parsedDate.getMonth() / 10
+    }))
+    console.log("Grouped data: ", fileData)
+    fileData = fileData.map((data) => ({
+        ...data,
+        value: data.ms_played
+    }))
+
+    //Sum values by same artist name and year
+    var reducedArray = fileData.reduce(function(acc, curr) {
+        var key = curr.master_metadata_album_artist_name + '|' + curr.year;
+        if (acc.hasOwnProperty(key)) {
+            acc[key].value += curr.value;
+        } else {
+            acc[key] = {
+                "artist": curr.master_metadata_album_artist_name,
+                "year": curr.year,
+                "value": curr.value
+            };
+        }
+        return acc;
+    }, {});
+
+    fileData = Object.values(reducedArray);
+    console.log("Summed data:", fileData)
+    fileData.sort((a, b) => {
+        if (a.artist < b.artist) {
+            return 1;
+        }
+        if (a.artist > b.artist) {
+            return -1;
+        }
+        return 0;
+    })
+    console.log("Sorted data by artist name:", fileData)
+
+    fileData.forEach((x, i) => {
+        if (i == 0) {
+            x.lastValue = x.value
+        } else if (x.artist == fileData[i - 1].artist) {
+            x.value += fileData[i - 1].value
+            x.lastValue = fileData[i - 1].value
+        } else {
+            x.lastValue = x.value
+        }
+    })
+    console.log("Added last value to data:", fileData)
+
+    var groupedByYear = d3.group(fileData, d => d.year)
+    var years = [...groupedByYear.keys()]
+    var reconstruct = []
+    groupedByYear.forEach((key, val) => {
+        console.log("Key: ", key)
+        console.log("Val: ", val)
+        var arr2 = key
+        var ranked = arr2.sort((a, b) => b.value - a.value).map((x, i) => ({
+            ...x,
+            rank: i + 1
+        }))
+        reconstruct = [...ranked, ...reconstruct]
+    })
+    console.log("Distinct years: ", years)
+    console.log("Reconstructed years: ", reconstruct)
+
+    renderChart(years, reconstruct)
+    document.getElementById("bar-race-title").style.display = "block"
+  }
+
+
+function renderChart(yearsD, data){
+  d3.select("#bar-race-svg").remove()
+  // Feel free to change or delete any of the code you see in this editor!
+  var svg = d3.select('#bar-race').append('svg').attr('width', 960).attr('height', 600).attr("id", "bar-race-svg");
+
+  var tickDuration = 2400;
+
+  var top_n = 12;
+  var height = 600;
+  var width = 960;
+
+  const m = {
+    top: 80,
+    right: 0,
+    bottom: 5,
+    left: 0,
+  };
+
+  let barPadding = (height - (m.bottom + m.top)) / (top_n * 5);
+
+  let year = yearsD[0];
+
+  const halo = function (text, strokeWidth) {
+    text
+      .select(function () {
+        return this.parentNode.insertBefore(this.cloneNode(true), this);
+      })
+      .style('fill', '#cbd5e1')
+      .style('stroke', '#ffffff')
+      .style('stroke-width', strokeWidth)
+      .style('stroke-linejoin', 'round')
+      .style('opacity', 1);
+  };
+
+    //if (error) throw error;
+
+    data.forEach((d) => {
+      (d.value = +d.value),
+        (d.lastValue = +d.lastValue),
+        (d.value = isNaN(d.value) ? 0 : d.value),
+        (d.year = +d.year),
+        (d.colour = d3.hsl(Math.random() * 360, 0.75, 0.75));
+    });
+
+    console.log(data);
+
+    let yearSlice = data
+      .filter((d) =>  d.year == year && !isNaN(d.value))
+
+      .sort((a, b) => b.value - a.value)
+
+      .slice(0, top_n );
+
+    yearSlice.forEach((d, i) => (d.rank = i));
+
+    console.log('yearSlice: ', yearSlice);
+
+    let x = d3
+      .scaleLinear()
+
+      .domain([0, d3.max(yearSlice, (d) => d.value)])
+
+      .range([m.left, width - m.right - 65]);
+
+    let y = d3
+      .scaleLinear()
+
+      .domain([top_n, 0])
+
+      .range([height - m.bottom, m.top]);
+
+    let xAxis = d3
+      .axisTop()
+      .scale(x)
+
+      .ticks(width > 500 ? 5 : 2)
+
+      .tickSize(-(height - m.top -m.bottom))
+
+      .tickFormat((d) => d3.format(',')(d));
+
+    svg
+      .append('g')
+      .attr('class', 'axis xAxis')
+      .attr('transform', `translate(0, ${m.top})`)
+      .call(xAxis)
+      .selectAll('.tick line')
+      .classed('origin', (d) => d == 0);
+
+    svg
+      .selectAll('rect.bar')
+      .data(yearSlice, (d) => d.artist)
+      .enter()
+      .append('rect')
+      .attr('class', 'bar')
+      .attr('x', x(0) + 1)
+      .attr('width', (d) => x(d.value) - x(0) - 1)
+      .attr('y', (d) => y(d.rank) + 5)
+      .attr('height', y(1) - y(0) - barPadding)
+      .style('fill', (d) => d.colour);
+
+    svg
+      .selectAll('text.label')
+      .data(yearSlice, (d) => d.artist)
+      .enter()
+      .append('text')
+      .attr('class', 'label')
+      .attr('x', (d) => x(d.value) - 8)
+      .attr('y', (d) => y(d.rank) + 5 + (y(1) - y(0)) / 2 + 1)
+      .style('text-anchor', 'end')
+      .html((d) => d.artist);
+
+    svg
+      .selectAll('text.valueLabel')
+      .data(yearSlice, (d) => d.artist)
+      .enter()
+      .append('text')
+      .attr('class', 'valueLabel')
+      .attr('x', (d) => x(d.value) + 5)
+      .attr('y', (d) => y(d.rank) + 5 + (y(1) - y(0)) / 2 + 1)
+      .text((d) => d3.format(',.0f')(d.lastValue));
+
+    let yearText = svg
+      .append('text')
+      .attr('class', 'yearText')
+      .attr('x', width - m.right)
+      .attr('y', height - 25)
+      .style('text-anchor', 'end')
+      .html(~~year)
+      .call(halo, 10);
+
+    let ticker = d3.interval((e) => {
+      yearSlice = data
+        .filter((d) => d.year == year && !isNaN(d.value))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, top_n);
+
+      yearSlice.forEach((d, i) => (d.rank = i));
+
+      //console.log('IntervalYear: ', yearSlice);
+
+      x.domain([0, d3.max(yearSlice, (d) => d.value)]);
+
+      svg.select('.xAxis').transition().duration(tickDuration).ease(d3.easeLinear).call(xAxis);
+
+      let bars = svg.selectAll('.bar').data(yearSlice, (d) => d.artist);
+
+      bars
+        .enter()
+        .append('rect')
+        .attr('class', (d) => `bar ${d.artist.replace(/\s/g, '_')}`)
+        .attr('x', x(0) + 1)
+        .attr('width', (d) => x(d.value) - x(0) - 1)
+        .attr('y', (d) => y(top_n + 1) + 5)
+        .attr('height', y(1) - y(0) - barPadding)
+        .style('fill', (d) => d.colour)
+        .transition()
+        .duration(tickDuration)
+        .ease(d3.easeLinear)
+        .attr('y', (d) => y(d.rank) + 5);
+
+      bars
+        .transition()
+        .duration(tickDuration)
+        .ease(d3.easeLinear)
+        .attr('width', (d) => x(d.value) - x(0) - 1)
+        .attr('y', (d) => y(d.rank) + 5);
+
+      bars
+        .exit()
+        .transition()
+        .duration(tickDuration)
+        .ease(d3.easeLinear)
+        .attr('width', (d) => x(d.value) - x(0) - 1)
+        .attr('y', (d) => y(top_n + 1) + 5)
+        .remove();
+
+      let labels = svg.selectAll('.label').data(yearSlice, (d) => d.artist);
+
+      labels
+        .enter()
+        .append('text')
+        .attr('class', 'label')
+        .attr('x', (d) => x(d.value) - 8)
+        .attr('y', (d) => y(top_n + 1) + 5 + (y(1) - y(0)) / 2)
+        .style('text-anchor', 'end')
+        .html((d) => d.artist)
+        .transition()
+        .duration(tickDuration)
+        .ease(d3.easeLinear)
+        .attr('y', (d) => y(d.rank) + 5 + (y(1) - y(0)) / 2 + 1);
+
+      labels
+        .transition()
+        .duration(tickDuration)
+        .ease(d3.easeLinear)
+        .attr('x', (d) => x(d.value) - 8)
+        .attr('y', (d) => y(d.rank) + 5 + (y(1) - y(0)) / 2 + 1);
+
+      labels
+        .exit()
+        .transition()
+        .duration(tickDuration)
+        .ease(d3.easeLinear)
+        .attr('x', (d) => x(d.value) - 8)
+        .attr('y', (d) => y(top_n + 1) + 5)
+        .remove();
+
+      let valueLabels = svg.selectAll('.valueLabel').data(yearSlice, (d) => d.artist);
+
+      valueLabels
+        .enter()
+        .append('text')
+        .attr('class', 'valueLabel')
+        .attr('x', (d) => x(d.value) + 5)
+        .attr('y', (d) => y(top_n + 1) + 5)
+        .text((d) => d3.format(',.0f')(d.lastValue))
+        .transition()
+        .duration(tickDuration)
+        .ease(d3.easeLinear)
+        .style('fill', '#cbd5e1')
+        .attr('y', (d) => y(d.rank) + 5 + (y(1) - y(0)) / 2 + 1);
+
+      valueLabels
+        .transition()
+        .duration(tickDuration)
+        .ease(d3.easeLinear)
+        .attr('x', (d) => x(d.value) + 5)
+        .attr('y', (d) => y(d.rank) + 5 + (y(1) - y(0)) / 2 + 1)
+        .tween('text', function (d) {
+          let i = d3.interpolateRound(d.lastValue, d.value);
+          return function (t) {
+            this.textContent = d3.format(',')(i(t));
+          };
+        });
+
+      valueLabels
+        .exit()
+        .transition()
+        .duration(tickDuration)
+        .ease(d3.easeLinear)
+        .attr('x', (d) => x(d.value) + 5)
+        .attr('y', (d) => y(top_n + 1) + 5)
+        .remove();
+
+      yearText.html(year);
+
+      if (year >= yearsD[yearsD.length - 1]) ticker.stop();
+      year = d3.format('.1f')(+year + 0.1);
+    }, tickDuration);
+}
+</script>

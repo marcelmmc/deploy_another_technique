@@ -1,0 +1,119 @@
+<div id="word-cloud-albumn"><h1></h1></div>
+<script>
+    import * as stopwords from 'stopword';
+    import * as d3 from 'd3';
+    import * as cloud from 'd3-cloud';
+    //we took inspiration of https://d3-graph-gallery.com/wordcloud.html, as it already provided a cloud layout
+    //we added a filtering for world clouds, stops words, and configure the world to produce the top result highlighted
+    var reader = new FileReader();
+    document.getElementById('input-file').addEventListener('change', function (e) {
+        if (e.target.files.length > 0) {
+            console.log('File: ', e.target.files);
+            var file = e.target.files[0];
+            console.log('File: ', file);
+            reader.addEventListener('load', parseFile, false);
+            if (file) {
+                reader.readAsText(file);
+            }
+        }
+    });
+    function parseFile() {
+        let wordsArr = [];
+        var fileData = JSON.parse(reader.result);
+        fileData = fileData.forEach((data) => {
+            if (data.master_metadata_album_album_name !== null && data.master_metadata_album_album_name !== undefined) {
+                wordsArr = wordsArr.concat(data.master_metadata_album_album_name.replace(/[&\/.'()]/g, '').split(' '));
+            }
+        });
+
+        console.log('word', wordsArr);
+        var dict_titles = {};
+        wordsArr = stopwords.removeStopwords(wordsArr);
+        console.log(wordsArr);
+        wordsArr.forEach((element) => {
+            if (
+                !(element.toLowerCase() in stopwords.eng && element.toLowerCase() in stopwords.fra) &&
+                element !== '-'
+            ) {
+                if (element.toLowerCase() in dict_titles) {
+                    dict_titles[element.toLowerCase()] += 10;
+                } else {
+                    dict_titles[element.toLowerCase()] = 10;
+                }
+            }
+        });
+        console.log('word dic', dict_titles);
+        const keysSorted = Object.keys(dict_titles).sort(function (a, b) {
+            return dict_titles[b] - dict_titles[a];
+        });
+        const min = dict_titles[keysSorted[keysSorted.length - 1]];
+        const max = dict_titles[keysSorted[0]];
+        var top_titles = keysSorted.map((el) => {
+            const normalized_font = ((dict_titles[el] - min) / (max - min)) * 50 + 30;
+            return { title: el, size: normalized_font };
+        });
+        const colors_arr = top_titles.map((el) => {
+            return el.title === top_titles[0].title ? '#ff0000' : '#69b3a2';
+        });
+        var colorScale = d3
+            .scaleOrdinal()
+            .domain(keysSorted.map((d) => d))
+            .range(colors_arr);
+        const max_titles = 20;
+        top_titles = top_titles.slice(0, Math.min(max_titles, keysSorted.length));
+        document.getElementById('word-cloud-albumn').style.display = 'block';
+        var margin = { top: 10, right: 10, bottom: 10, left: 10 };
+        var width = 1000;
+
+        var height = 500;
+        var svg = d3
+            .select('#word-cloud-albumn')
+            .append('svg')
+
+            .attr('width', width + margin.left + margin.right)
+
+            .attr('height', height + margin.top + margin.bottom)
+
+            .append('g')
+            .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+        colorScale[keysSorted[0]] = '#ff0000';
+        var layout = cloud()
+            .size([width, height])
+            .words(
+                top_titles.map(function (d) {
+                    console.log(d.title + d.size);
+                    return { text: d.title, size: d.size };
+                })
+            )
+            .padding(5) //space between words
+            .rotate(function () {
+                return ~~(Math.random() * 2) * 90;
+            })
+            .fontSize(function (d) {
+                return d.size;
+            }) // font size of words
+            .on('end', draw);
+        layout.start();
+        function draw(words) {
+            svg.append('g')
+                .attr('transform', 'translate(' + layout.size()[0] / 2 + ',' + layout.size()[1] / 2 + ')')
+                .selectAll('text')
+                .data(words)
+                .enter()
+                .append('text')
+                .style('font-size', function (d) {
+                    return d.size;
+                })
+                .style('fill', colorScale)
+                .attr('text-anchor', 'middle')
+                .style('font-family', 'Impact')
+                .attr('transform', function (d) {
+                    return 'translate(' + [d.x, d.y] + ')rotate(' + d.rotate + ')';
+                })
+                .text(function (d) {
+                    return d.text;
+                });
+        }
+    }
+    /////////////////////////////////////////////////////////
+</script>

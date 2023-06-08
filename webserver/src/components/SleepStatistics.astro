@@ -1,0 +1,65 @@
+<div class="flex flex-row gap-16 justify-center items-center h-full" id="sleep-stats" style="display:none">
+    <div class="flex flex-col items-center text-2xl">
+        <h1>Average sleep time</h1>
+        <p class="font-bold text-4xl" id="sleep-sleep-mean"></p>
+    </div>
+    <div class="flex flex-col items-center text-2xl">
+        <h1>Average wake up time</h1>
+        <p class="font-bold text-4xl" id="sleep-wakeup-mean"></p>
+    </div>
+</div>
+<head>
+    <title>JavaScript D3 Example</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  
+<script in:line>
+    Date.prototype.addHours = function(h) {
+        this.setTime(this.getTime() + (h * 60 * 60 * 1000));
+        return this;
+    }
+
+    document.addEventListener('fileParsingComplete', function(event) {
+        var parsedData = event.detail;
+        callbackParsingSleep(parsedData);
+    });
+
+    function callbackParsingSleep(fileData) {
+        console.log("JSON data: ", fileData)
+        //Parses the string to a date object
+        fileData = fileData.map((data) => ({
+            ...data,
+            parsedDate: new Date(data.ts),
+            dateWithoutHours: new Date(new Date(data.ts).addHours(-4).toDateString())
+        }))
+
+        //Groups data by date.   
+        const groupedByDate = d3.group(fileData, d => d.dateWithoutHours)
+        //Now compute latest and earlier hour by date and put in two arrays map.
+        const earliest = []
+        const latest = []
+        for (let [key, value] of groupedByDate) {
+            console.log("Key: ", key)
+            const sorted = value.sort((a, b) => a.parsedDate - b.parsedDate).map((data) => ({
+                ...data,
+                parsedDate: data.parsedDate.addHours(4)
+            }))
+            console.log("Sorted values after processing: ", sorted)
+            earliest.push(sorted[0].parsedDate.getHours())
+            latest.push(sorted[sorted.length - 1].parsedDate.getHours())
+        }
+
+        const averageWakeUpTime = earliest.filter((a) => a < 13 && a > 4).reduce((a, b) => a + b, 0) / earliest.length
+        const averageSleepTime = earliest.filter((a) => a > 19 || a < 5).reduce((a, b) => a + b, 0) / earliest.length
+
+        console.log("Earliest hours: ", earliest)
+        console.log("Latest hours: ", latest)
+
+        console.log("Summed data:", fileData)
+        //fileData.sort((a, b) => b.value - a.value)
+
+        document.getElementById("sleep-sleep-mean").innerHTML = `${Math.round(averageSleepTime)}:00`
+        document.getElementById("sleep-wakeup-mean").innerHTML = `${Math.round(averageWakeUpTime)}:00`
+        document.getElementById("sleep-stats").style.display = "flex"
+    }
+</script>
