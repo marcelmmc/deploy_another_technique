@@ -1,77 +1,73 @@
 <div class="w-full md:px-16 pb-12">
-    <h1 class="text-3xl font-bold py-4 pb-12 text-gray-700" id="most-played-track-title" style="display: none;">Your most played songs were:</h1>
-    <div id="most-played-track" class="flex md:flex-row mx-12 gap-12">
-
-    </div>
+    <h1 class="text-3xl font-bold py-4 pb-12 text-gray-700" id="most-played-track-title">
+        Your most played songs were:
+    </h1>
+    <div id="most-played-track" class="flex md:flex-row mx-12 gap-12"></div>
 </div>
 
 <script is:inline>
-document.addEventListener('fileParsingComplete', function(event) {
+document.addEventListener('fileParsingComplete', function (event) {
     var parsedData = event.detail;
-    callbackParsing(parsedData);
+    callbackParsingTrack(parsedData);
 });
 
-function callbackParsing(fileData) {
-    console.log("JSON merged data: ", fileData)
+function callbackParsingTrack(fileData) {
+    console.log('JSON merged data: ', fileData);
     //Parses the string to a date object
     fileData = fileData.map((data) => ({
         ...data,
-        parsedDate: new Date(data.ts)
-    }))
+        parsedDate: new Date(data.ts),
+    }));
     //Gets date from data
     fileData = fileData.map((data) => ({
         ...data,
-        year: data.parsedDate.getFullYear() + data.parsedDate.getMonth() / 10
-    }))
+        year: data.parsedDate.getFullYear() + data.parsedDate.getMonth() / 10,
+    }));
     fileData = fileData.map((data) => ({
         ...data,
-        value: data.ms_played
-    }))
-    console.log("Grouped data: ", fileData)
+        value: data.ms_played,
+    }));
+    console.log('Grouped data: ', fileData);
 
     //Sum values by same artist name and year
-    var reducedArray = fileData.reduce(function(acc, curr) {
+    var reducedArray = fileData.reduce(function (acc, curr) {
         var key = curr.spotify_track_uri;
         if (acc.hasOwnProperty(key)) {
             acc[key].value += curr.value;
         } else {
             acc[key] = {
-                "spotify_track_uri": curr.spotify_track_uri,
-                "value": curr.value
+                spotify_track_uri: curr.spotify_track_uri,
+                value: curr.value,
             };
         }
         return acc;
     }, {});
 
     fileData = Object.values(reducedArray);
-    console.log("Summed data:", fileData)
-    fileData.sort((a, b) => b.value - a.value)
+    console.log('Summed data:', fileData);
+    fileData.sort((a, b) => b.value - a.value);
 
-
-    for (let i = 0; i < 3; i++){
-    const trackId = fileData[i].spotify_track_uri.split(":")[2]
-    const trackUri = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator`
-    const ifrm = document.createElement("iframe");
-    console.log("Track URI: ", trackUri)
-    ifrm.style.width = "100%";
-    ifrm.style.height = "352";
-    ifrm.setAttribute("width", "100%")
-    ifrm.setAttribute("height", "352")
-    ifrm.setAttribute("frameBorder", "0")
-    ifrm.setAttribute("id", `iframe-most-played-${i}`)
-    ifrm.setAttribute("allow", "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture")
-    ifrm.setAttribute("src", trackUri)
-    const old = document.getElementById(`iframe-most-played-${i}`)
-    if(old){
-        old.remove()
-    }
-    document.getElementById("most-played-track").appendChild(ifrm);
+    for (let i = 0; i < 3; i++) {
+        const trackId = fileData[i].spotify_track_uri.split(':')[2];
+        const trackUri = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator`;
+        const ifrm = document.createElement('iframe');
+        console.log('Track URI: ', trackUri);
+        ifrm.style.width = '100%';
+        ifrm.style.height = '352';
+        ifrm.setAttribute('width', '100%');
+        ifrm.setAttribute('height', '352');
+        ifrm.setAttribute('frameBorder', '0');
+        ifrm.setAttribute('id', `iframe-most-played-${i}`);
+        ifrm.setAttribute('allow', 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture');
+        ifrm.setAttribute('src', trackUri);
+        const old = document.getElementById(`iframe-most-played-${i}`);
+        if (old) {
+            old.remove();
+        }
+        document.getElementById('most-played-track').appendChild(ifrm);
     }
 
     //Show header title
-    document.getElementById("most-played-track-title").style.display = "block"
-
-  }
-
-
+    document.getElementById('most-played-track-title').style.display = 'block';
+}
 </script>

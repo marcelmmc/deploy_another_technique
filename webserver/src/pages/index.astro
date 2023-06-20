@@ -14,7 +14,7 @@ import WordCloud from '~/components/WordCloud.astro';
 import World from '~/components/World.astro';
 import WorldCloudAlbumn from '~/components/WordCloudAlbumn.astro';
 import FeatureExplanation from '~/components/FeatureExplanation.astro';
-
+import Test from '~/components/Test.astro';
 const meta = {
   title: SITE.title,
   description: SITE.description,
@@ -46,64 +46,64 @@ const meta = {
         />
       </div>
       <body>
-      <script is:inline>
-        var mergedData = []; // Globally accessible variable to store the parsed data
-      
-        document.getElementById('input-file').addEventListener('change', function (e) {
-          if (e.target.files.length > 0) {
-            var files = e.target.files;
-            var count = 0; // Counter to track the number of files processed
-      
-            for (var i = 0; i < files.length; i++) {
-              var file = files[i];
-              var reader = new FileReader();
-      
-              reader.addEventListener(
-                'load',
-                function (e) {
-                  var fileData = JSON.parse(e.target.result);
-                  mergedData = [...mergedData, ...fileData];
-                  count++;
-                  // Check if all files have been processed
-                  if (count === files.length) {
-                    mergedData = mergedData.map((data) => ({
-                      ...data,
-                      parsedDate: new Date(data.ts),
-                    }));
-                    mergedData.sort((a, b) => a.parsedDate - b.parsedDate);
-                    // Dispatch a custom event to notify the completion of file parsing
-                    var event = new CustomEvent('fileParsingComplete', { detail: mergedData });
-                    document.dispatchEvent(event);
-                  }
-                },
-                false
-              );
-      
-              if (file) {
-                reader.readAsText(file);
+        <script is:inline>
+          var mergedData = []; // Globally accessible variable to store the parsed data
+
+          document.getElementById('input-file').addEventListener('change', function (e) {
+            if (e.target.files.length > 0) {
+              var files = e.target.files;
+              var count = 0; // Counter to track the number of files processed
+
+              for (var i = 0; i < files.length; i++) {
+                var file = files[i];
+                var reader = new FileReader();
+
+                reader.addEventListener(
+                  'load',
+                  function (e) {
+                    var fileData = JSON.parse(e.target.result);
+                    mergedData = [...mergedData, ...fileData];
+                    count++;
+                    // Check if all files have been processed
+                    if (count === files.length) {
+                      mergedData = mergedData.map((data) => ({
+                        ...data,
+                        parsedDate: new Date(data.ts),
+                      }));
+                      mergedData.sort((a, b) => a.parsedDate - b.parsedDate);
+                      // Dispatch a custom event to notify the completion of file parsing
+                      var event = new CustomEvent('fileParsingComplete', { detail: mergedData });
+                      document.dispatchEvent(event);
+                    }
+                  },
+                  false
+                );
+
+                if (file) {
+                  reader.readAsText(file);
+                }
               }
             }
+          });
+
+          //COPY THIS CODE HERE IN YOUR COMPONENT */
+          // COPY THIS CODE HERE IN YOUR COMPONENT/
+          // Event listener to handle the completion of file parsing
+          document.addEventListener('fileParsingComplete', function (event) {
+            var parsedData = event.detail;
+            callbackParsing(parsedData);
+          });
+
+          async function callbackParsing(data) {
+            // Use the parsed data in your function
+            console.log('Parsed Data: ', data);
+            document.getElementById('content').style.display = 'block';
+            // document.getElementById('link-spotify-download').style.display = 'none';
+            // Perform further processing or actions}
           }
-        });
-      
-        //COPY THIS CODE HERE IN YOUR COMPONENT */
-        // COPY THIS CODE HERE IN YOUR COMPONENT/
-        // Event listener to handle the completion of file parsing
-        document.addEventListener('fileParsingComplete', function (event) {
-          var parsedData = event.detail;
-          callbackParsing(parsedData);
-        });
-      
-        async function callbackParsing(data) {
-          // Use the parsed data in your function
-          console.log('Parsed Data: ', data);
-          document.getElementById('content').style.display = 'block';
-          // document.getElementById('link-spotify-download').style.display = 'none';
-          // Perform further processing or actions}
-        }
-      </script>
-      
-      <!-- <script>
+        </script>
+
+        <!-- <script>
         // COPY THIS CODE HERE IN YOUR COMPONENT/
         // Event listener to handle the completion of file parsing
         document.addEventListener('fileParsingComplete', function (event) {
@@ -123,8 +123,8 @@ const meta = {
       <div class="mt-16" id="pre-content">
         <p style="display: block;" class="font-light cursor-pointer text-blue-500 underline hover:underline">
           <a href="https://support.spotify.com/us/article/data-rights-and-privacy-settings/">
-            To use this application, please click here to ask Spotify for your data. 
-            We encourage you to download all the data available, you can then upload the endsong.json files here.
+            To use this application, please click here to ask Spotify for your data. We encourage you to download all
+            the data available, you can then upload the endsong.json files here.
           </a>
         </p>
 
@@ -164,34 +164,37 @@ const meta = {
  ts	ms_played	conn_country	ip_addr_decrypted	user_agent_decrypted	master_metadata_track_name	master_metadata_album_artist_name	master_metadata_album_album_name	spotify_track_uri	episode_name	episode_show_name	spotify_episode_uri	reason_start	reason_end	shuffle	skipped	offline	offline_timestamp	incognito_mode
 2018-09-24T17:43:57Z	235382	CH	85.218.54.155	unknown	Sing	Ed Sheeran	x	spotify:track:6K8qKeWo5MsFED7wCR6Kop	None	None	None	fwdbtn	trackdone	True	None	True	1537810148612	False
 -->
-<VizLayout
-    title={''}
-    vizText={'These are the 19 features inside the main endsong.json files that Spotify uses to track your data.'}
-    reverse={true}
-    dataUsed={{
-      ts: '2018-09-24T17:43:57Z',
-      ms_played: 235382,
-      conn_country: 'CH',
-      ip_addr_decrypted: '85.208.53.147',
-      user_agent_decrypted: 'unknown',
-      master_metadata_track_name: 'Sing',
-      master_metadata_album_artist_name: 'Ed Sheeran',
-      master_metadata_album_album_name: 'x',
-      spotify_track_uri: 'spotify:track:6K8qKeWo5MsFED7wCR6Kop',
-      episode_name: 'None',
-      episode_show_name: 'None',
-      spotify_episode_uri: 'None',
-      reason_start: 'fwdbtn',
-      reason_end: 'trackdone',
-      shuffle: true,
-      skipped: 'None',
-      offline: true,
-      offline_timestamp: 1537230143612,
-      incognito_mode: false,
-    }}
-  >
-    <FeatureExplanation />
-  </VizLayout>
+
+  <div id="pre-content-no" style="display: block">
+    <VizLayout
+      title={''}
+      vizText={'These are the 19 features inside the main endsong.json files that Spotify uses to track your data.'}
+      reverse={true}
+      dataUsed={{
+        ts: '2018-09-24T17:43:57Z',
+        ms_played: 235382,
+        conn_country: 'CH',
+        ip_addr_decrypted: '85.208.53.147',
+        user_agent_decrypted: 'unknown',
+        master_metadata_track_name: 'Sing',
+        master_metadata_album_artist_name: 'Ed Sheeran',
+        master_metadata_album_album_name: 'x',
+        spotify_track_uri: 'spotify:track:6K8qKeWo5MsFED7wCR6Kop',
+        episode_name: 'None',
+        episode_show_name: 'None',
+        spotify_episode_uri: 'None',
+        reason_start: 'fwdbtn',
+        reason_end: 'trackdone',
+        shuffle: true,
+        skipped: 'None',
+        offline: true,
+        offline_timestamp: 1537230143612,
+        incognito_mode: false,
+      }}
+    >
+      <FeatureExplanation />
+    </VizLayout>
+  </div>
   <div id="content" style="display: none">
     <div class="flex items-center justify-center flex-col w-full">
       <MostListenedTrack />
@@ -201,22 +204,30 @@ const meta = {
       <MostListenedArtist />
     </div> -->
     <VizLayout
-    title={'Most listened artists'}
-    reverse={false}
-    dataUsed={{ tz: '2019/10/22', ms_played: 1500 }}
-    vizText={'We use the number of ms_played and the listening dates in order to show this graph!'}
-  >
-    <BarChartRace />
-  </VizLayout>
-
+      title={'Most listened artists'}
+      reverse={false}
+      dataUsed={{ tz: '2019/10/22', ms_played: 1500 }}
+      vizText={'We use the number of ms_played and the listening dates in order to show this graph!'}
+    >
+      <BarChartRace />
+    </VizLayout>
     <!-- <VizLayout
+      title={'Most listened artists'}
+      reverse={false}
+      dataUsed={{ tz: '2019/10/22', ms_played: 1500 }}
+      vizText={'We use the number of ms_played and the listening dates in order to show this graph!'}
+    >
+      <Test />
+    </VizLayout> -->
+
+    <VizLayout
       title={'Visited cities'}
       vizText={'In order to show the location of the cities, we use the ip-api.com api to obtain the approximate location with the ip_addr_decrypted.'}
       reverse={true}
       dataUsed={{ country: 'BR', ms_played: 1500, tz: '2012/10/22', decrypted_ip_addr: '129.34.29.28' }}
     >
       <VisitedCities />
-    </VizLayout> -->
+    </VizLayout>
     <VizLayout
       title={'Visited cities'}
       vizText={'In order to show the location of the cities, we use the ip-api.com api to obtain the approximate location with the ip_addr_decrypted.'}
@@ -241,13 +252,21 @@ const meta = {
     >
       <SleepStatistics />
     </VizLayout>
-    <VizLayout vizText={''} title={'Word Cloud of Track Names'} reverse={false} dataUsed={{ master_metadata_album_artist_name: 'Imagine Dragons'}}>
+    <VizLayout
+      vizText={''}
+      title={'Word Cloud of Track Names'}
+      reverse={false}
+      dataUsed={{ master_metadata_album_artist_name: 'Imagine Dragons' }}
+    >
       <WordCloud />
     </VizLayout>
-    <VizLayout vizText={''} title={'Word Cloud of Album Titles'} reverse={true} dataUsed={{ master_metadata_album_album_name: 'Smoke + Mirrors'}}>
+    <VizLayout
+      vizText={''}
+      title={'Word Cloud of Album Titles'}
+      reverse={true}
+      dataUsed={{ master_metadata_album_album_name: 'Smoke + Mirrors' }}
+    >
       <WorldCloudAlbumn />
     </VizLayout>
   </div>
-
-
 </Layout>
